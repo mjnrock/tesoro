@@ -1,0 +1,9 @@
+.lock-screen {
+    margin: 0;
+    padding: 0;
+    height: calc(100vh - 10px);
+    overflow: hidden;
+    width: calc(100vw - 10px);
+    position: fixed;
+    border: 5px solid #5b3;
+}
