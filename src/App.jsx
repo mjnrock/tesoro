@@ -1,62 +1,50 @@
 import React from "react";
 
-export default class App extends React.Component {
-    processFile(dataURL, fileType) {
-        let maxWidth = 800;
-        let maxHeight = 800;
-    
-        let image = new Image();
-        image.src = dataURL;
-    
-        image.onload = function () {    
-            let canvas = document.getElementById('canvas');
+let id = null;
 
-            canvas.width = 200;
-            canvas.height = 200;
-    
-            let context = canvas.getContext('2d');
-    
-            context.drawImage(this, 0, 0, canvas.width, canvas.height);
-    
-            dataURL = canvas.toDataURL(fileType);
-        };
-    
-        image.onerror = function () {
-            alert('There was an error processing your file!');
-        };
-    }
+export default class App extends React.Component {    
+    geoFindMe() {
+        const status = document.querySelector('#status');
 
-    readFile(file) {
-        let reader = new FileReader();
-    
-        reader.onloadend = function () {
-            this.processFile(reader.result, file.type);
-        }.bind(this);
-    
-        reader.onerror = function () {
-            alert('There was an error reading the file!');
+        function success(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            console.log(position.coords);
+            status.textContent = `${ latitude }, ${ longitude } | ${ position.coords.accuracy } | ${ position.coords.heading }`;
+            navigator.geolocation.clearWatch(id);
+            
+            // navigator.geolocation.getCurrentPosition(success, error);
+            id = navigator.geolocation.watchPosition(success, error, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+            });
         }
-    
-        reader.readAsDataURL(file);
-    }
 
-    handleChange(e) {
-        let file = e.target.files[0];
-
-        if(file) {
-            if (/^image\//i.test(file.type)) {
-                this.readFile(file);
-            } else {
-                alert('Not a valid image!');
-            }
+        function error(e) {
+            console.log(e);
+            status.textContent = e.message;
         }
+
+        if (!navigator.geolocation) {
+            status.textContent = 'Geolocation is not supported by your browser';
+        } else {
+            status.textContent = 'Locating…';
+            // navigator.geolocation.getCurrentPosition(success, error);
+            id = navigator.geolocation.watchPosition(success, error, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+            });
+        }
+
     }
 
     render() {
         return (
             <div>
-                <input type="file" accept="image/*" capture="camera" onChange={ this.handleChange.bind(this) } />
-                <canvas id="canvas"></canvas>
+                <button id="find-me" onClick={ this.geoFindMe.bind(this) }>Show my location</button>
+                <br />
+                <p id="status"></p>
             </div>
         )
     };
