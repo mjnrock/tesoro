@@ -2,12 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
 
-window.addEventListener("load",function() {
-    setTimeout(function(){
-        // This hides the address bar:
-        window.scrollTo(0, 1);
-    }, 0);
-});
+import MTSLib from "@lespantsfancy/message-transfer-system";
+
+const MTS = (new MTSLib.Main()).loadNetwork(false);
+MTS.Network.createWebSocket({ uri: `localhost:3000` });
 
 ReactDOM.render(
     <App />,

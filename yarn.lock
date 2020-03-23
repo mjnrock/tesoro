@@ -1153,6 +1153,11 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
+"@lespantsfancy/message-transfer-system@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@lespantsfancy/message-transfer-system/-/message-transfer-system-0.1.4.tgz#89db8ccf6ac8766f96bcaae25477709b1295ab6b"
+  integrity sha512-voGfhoVO8/670dYMUJhr26NRnbCKEOZf2R9aYHk6Pyo1bx/l4L+VJQsYVXvHYqidu0SozD+dLHwkITh1BH1nGQ==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
