@@ -10,21 +10,33 @@ MTSLib.Browser.Input.MouseNode = MouseNode;
 MTSLib.Browser.Input.KeyboardNode = KeyboardNode;
 
 const MTS = (new MTSLib.Main({
-    receive: (msg) => {
-        document.getElementById("debug").innerHTML = JSON.stringify(MTSLib.Helper.CloneAsObject(msg), null, 2);
-    },
-    routes: [
-        ...MTSLib.Browser.Input.MouseNode.AllSignalTypes(
-            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MOVE,
-            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MASK,
-        ),
-        ...MTSLib.Browser.Input.KeyboardNode.AllSignalTypes()
-    ]
-})).loadNetwork(false, { routes: [ 
-    MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_CLICK,
-]}).loadBrowserInput({ mouse: true, keys: true });
+        // Overwrite the #debug element with that last Message received
+        receive: (msg) => {
+            document.getElementById("debug").innerHTML = JSON.stringify(MTSLib.Helper.CloneAsObject(msg), null, 2);
+        },
+        // A list of routes for the Main Node to respond to
+        routes: [
+            ...MTSLib.Browser.Input.MouseNode.AllSignalTypes(
+                MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MOVE,
+                MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MASK,
+            ),
+            ...MTSLib.Browser.Input.KeyboardNode.AllSignalTypes()
+        ]
+    }))
+    // Activate the ConnectionBroker, establish as a Slave, and respond to a subset list of Message.types
+    .loadNetwork(false, {
+        routes: [ 
+            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_CLICK,
+        ]
+    })
+    // Activate the MTS.Browser.Input Nodes
+    .loadBrowserInput({
+        mouse: true,
+        keys: true
+    });
 
-MTS.Network.createWebSocket({ uri: `localhost:3000` });
+// Establish a websocket connection
+MTS.Network.webSocketNode({ uri: `localhost:3000` });
 
 // const [ GEO_LOC ] = MTS.register(new MTSLib.Browser.GeoLocationNode({ name: "GeoLocation", receive: console.log }));
 // GEO_LOC.getPosition();
