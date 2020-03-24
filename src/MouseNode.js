@@ -9,6 +9,7 @@ const { GenerateUUID } = MTSLib.Helper;
 const Node = MTSLib.Node;
 const Message = MTSLib.Message;
 
+//TODO Add SignalType.SELECTION that takes the `e.button:onMouseDown` and fires when `e.button:onMouseUp`, returning both coordinates | Also account for situations where the up event is not recordable (e.g. off document)
 export default class MouseNode extends Node {
     static SignalTypes = {
         MOUSE_MASK: "MouseNode.MouseMask",
@@ -18,8 +19,12 @@ export default class MouseNode extends Node {
         MOUSE_CONTEXT_MENU: "MouseNode.MouseContextMenu",
         MOUSE_UP: "MouseNode.MouseUp",
         MOUSE_DOWN: "MouseNode.MouseDown",
+
+        //* WIP, not currently implemented
+        MOUSE_SELECTION: "MouseNode.MouseSelection",    // return a rectangular area | Button-specific, utilize mask
+        MOUSE_PATH: "MouseNode.MousePath",    // return an array of the points hit between the down and up event | Button-specific, utilize mask
     };
-    //* The primary use of this function is for <Router>
+    
     static AllSignalTypes(...filter) {
         return Object.values(MouseNode.SignalTypes).filter(st => {
             if(filter.includes(st)) {
@@ -47,7 +52,17 @@ export default class MouseNode extends Node {
         this.state = {
             Map: btnmap || {},
             Flags: btnflags || {},
-            Mask: 0
+            Mask: 0,
+            Selection: {
+                Points: [],
+                Start: 0,       // If Date.now() >= Start + Threshold, fire the event
+                Threshold: 5000 // ms
+            },
+            Path: {
+                Points: [],
+                Start: 0,       // If Date.now() >= Start + Threshold, fire the event
+                Threshold: 5000 // ms
+            },
         };
 
         //*  Default: Left/Right/Middle
