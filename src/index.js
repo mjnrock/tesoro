@@ -16,11 +16,14 @@ const MTS = (new MTSLib.Main({
         },
         // A list of routes for the Main Node to respond to
         routes: [
-            ...MTSLib.Browser.Input.MouseNode.AllSignalTypes(
-                MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MOVE,
-                MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MASK,
-            ),
-            ...MTSLib.Browser.Input.KeyboardNode.AllSignalTypes()
+            // MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_SELECTION,
+            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_PATH,
+            // ...MTSLib.Browser.Input.MouseNode.AllSignalTypes(
+            //     MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MOVE,
+            //     MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MASK,
+            // ),
+            ...MTSLib.Browser.Input.KeyboardNode.AllSignalTypes(),
+            ...MTSLib.Network.WebSocketNode.AllSignalTypes()
         ]
     }))
     // Activate the ConnectionBroker, establish as a Slave, and respond to a subset list of Message.types
@@ -32,11 +35,11 @@ const MTS = (new MTSLib.Main({
     // Activate the MTS.Browser.Input Nodes
     .loadBrowserInput({
         mouse: true,
-        keys: true
+        keys: false
     });
 
 // Establish a websocket connection
-MTS.Network.webSocketNode({ uri: `localhost:3000` });
+// MTS.Network.webSocketNode({ uri: `localhost:3000` });
 
 // const [ GEO_LOC ] = MTS.register(new MTSLib.Browser.GeoLocationNode({ name: "GeoLocation", receive: console.log }));
 // GEO_LOC.getPosition();

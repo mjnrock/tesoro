@@ -9,7 +9,6 @@ const { GenerateUUID } = MTSLib.Helper;
 const Node = MTSLib.Node;
 const Message = MTSLib.Message;
 
-//TODO Add SignalType.SELECTION that takes the `e.button:onMouseDown` and fires when `e.button:onMouseUp`, returning both coordinates | Also account for situations where the up event is not recordable (e.g. off document)
 export default class MouseNode extends Node {
     static SignalTypes = {
         MOUSE_MASK: "MouseNode.MouseMask",
@@ -19,10 +18,8 @@ export default class MouseNode extends Node {
         MOUSE_CONTEXT_MENU: "MouseNode.MouseContextMenu",
         MOUSE_UP: "MouseNode.MouseUp",
         MOUSE_DOWN: "MouseNode.MouseDown",
-
-        //* WIP, not currently implemented
-        MOUSE_SELECTION: "MouseNode.MouseSelection",    // return a rectangular area | Button-specific, utilize mask
-        MOUSE_PATH: "MouseNode.MousePath",    // return an array of the points hit between the down and up event | Button-specific, utilize mask
+        MOUSE_SELECTION: "MouseNode.MouseSelection",
+        MOUSE_PATH: "MouseNode.MousePath",
     };
     
     static AllSignalTypes(...filter) {
@@ -53,16 +50,8 @@ export default class MouseNode extends Node {
             Map: btnmap || {},
             Flags: btnflags || {},
             Mask: 0,
-            Selection: {
-                Points: [],
-                Start: 0,       // If Date.now() >= Start + Threshold, fire the event
-                Threshold: 5000 // ms
-            },
-            Path: {
-                Points: [],
-                Start: 0,       // If Date.now() >= Start + Threshold, fire the event
-                Threshold: 5000 // ms
-            },
+            Selection: {},
+            Path: {},
         };
 
         //*  Default: Left/Right/Middle
@@ -76,6 +65,94 @@ export default class MouseNode extends Node {
         
         if(!window) {
             throw new Error("Window is not supported");
+        }
+    }
+
+    _startPath(button, x, y, timeout = 2000) {
+        let id = GenerateUUID();
+
+        let obj = {
+            id: id,
+            button: button,
+            points: [
+                [ x, y ]
+            ],
+            timeout: setTimeout(() => this._firePath(button), timeout)
+        };
+        
+        this.state.Path[ button ] = obj;
+
+        return obj;
+    }
+    _addPath(button, x, y, timeout = 2000) {
+        this.state.Path[ button ].points.push([ x, y ]);
+        
+        clearTimeout(this.state.Path[ button ].timeout);
+        this.state.Path[ button ].timeout = setTimeout(() => this._firePath(button), timeout);
+    }
+    _firePath(button) {
+        let path = this.state.Path[ button ];
+
+        if(path) {
+            this.send(
+                MouseNode.SignalTypes.MOUSE_PATH,
+                {
+                    button: path.button,
+                    mask: this.state.Mask,
+                    points: path.points
+                }
+            );
+
+            clearTimeout(path.timeout);
+
+            delete this.state.Path[ button ];
+        }
+    }
+
+    _startSelection(button, x, y, timeout = 5000, threshold = 20) {
+        let id = GenerateUUID();
+
+        let obj = {
+            id: id,
+            button: button,
+            points: {
+                start: [ x, y ],
+                end: []
+            },
+            threshold: threshold,
+            timeout: setTimeout(() => this._fireSelection(button), timeout)
+        };
+        
+        this.state.Selection[ button ] = obj;
+    }
+    _fireSelection(button) {
+        let selection = this.state.Selection[ button ];
+
+        if(selection) {
+            if(selection.points.end.length) {
+                let size = {
+                    width: selection.points.end[ 0 ] - selection.points.start[ 0 ],
+                    height: selection.points.end[ 1 ] - selection.points.start[ 1 ],
+                    threshold: selection.threshold
+                }
+
+                if(Math.abs(size.width) >= selection.threshold && Math.abs(size.height) >= selection.threshold) {
+                    this.send(
+                        MouseNode.SignalTypes.MOUSE_SELECTION,
+                        {
+                            button: selection.button,
+                            mask: this.state.Mask,
+                            start: selection.points.start,
+                            end: selection.points.end,
+                            size: size,
+                        }
+                    );
+                }
+            }
+
+            clearTimeout(selection.timeout);
+
+            delete this.state.Selection[ button ];
         }
     }
 
@@ -110,14 +187,24 @@ export default class MouseNode extends Node {
         e.preventDefault();
 
         this.updateMask(e);
+        
+        let pos = this.getMousePosition(e);
         this.message(new Message(
             MouseNode.SignalTypes.MOUSE_MOVE,
             {
                 mask: this.state.Mask,
-                ...this.getMousePosition(e)
+                ...pos
             },
             this.signet
         ));
+
+        for(let path of Object.values(this.state.Path)) {
+            this._addPath(
+                path.button,
+                pos.x,
+                pos.y
+            );
+        }
     
         return this;
     }
@@ -125,15 +212,32 @@ export default class MouseNode extends Node {
         e.preventDefault();
 
         this.updateMask(e);
+
+        let pos = this.getMousePosition(e);
         this.message(new Message(
             MouseNode.SignalTypes.MOUSE_DOWN,
             {
                 button: e.button,
                 mask: this.state.Mask,
-                ...this.getMousePosition(e)
+                ...pos
             },
             this.signet
         ));
+
+        if(!this.state.Selection[ e.button ]) {
+            this._startSelection(
+                e.button,
+                pos.x,
+                pos.y
+            );
+        }
+        if(!this.state.Path[ e.button ]) {
+            this._startPath(
+                e.button,
+                pos.x,
+                pos.y
+            );
+        }
     
         return this;
     }
@@ -141,15 +245,29 @@ export default class MouseNode extends Node {
         e.preventDefault();
 
         this.updateMask(e);
+        
+        let pos = this.getMousePosition(e);
         this.message(new Message(
             MouseNode.SignalTypes.MOUSE_UP,
             {
                 button: e.button,
                 mask: this.state.Mask,
-                ...this.getMousePosition(e)
+                ...pos
             },
             this.signet
         ));
+
+        if(this.state.Selection[ e.button ]) {
+            this.state.Selection[ e.button ].points.end = [ pos.x, pos.y ];
+            this._fireSelection(
+                e.button
+            );
+        }
+        if(this.state.Path[ e.button ]) {
+            this._firePath(
+                e.button
+            );
+        }
     
         return this;
     }
