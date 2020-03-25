@@ -11,6 +11,7 @@ const Message = MTSLib.Message;
 
 export default class MouseNode extends Node {
     static SignalTypes = {
+        //* Singleton Actions
         MOUSE_MASK: "MouseNode.MouseMask",
         MOUSE_MOVE: "MouseNode.MouseMove",
         MOUSE_CLICK: "MouseNode.MouseClick",
@@ -18,6 +19,8 @@ export default class MouseNode extends Node {
         MOUSE_CONTEXT_MENU: "MouseNode.MouseContextMenu",
         MOUSE_UP: "MouseNode.MouseUp",
         MOUSE_DOWN: "MouseNode.MouseDown",
+
+        //* Complex Actions
         MOUSE_SELECTION: "MouseNode.MouseSelection",
         MOUSE_PATH: "MouseNode.MousePath",
     };
@@ -52,6 +55,7 @@ export default class MouseNode extends Node {
             Mask: 0,
             Selection: {},
             Path: {},
+            emitComplexActions: false
         };
 
         //*  Default: Left/Right/Middle
@@ -66,6 +70,12 @@ export default class MouseNode extends Node {
         if(!window) {
             throw new Error("Window is not supported");
         }
+    }
+
+    toggleComplexActions() {
+        this.state.emitComplexActions = !this.state.emitComplexActions;
+
+        return this;
     }
 
     _startPath(button, x, y, timeout = 2000) {
@@ -198,12 +208,14 @@ export default class MouseNode extends Node {
             this.signet
         ));
 
-        for(let path of Object.values(this.state.Path)) {
-            this._addPath(
-                path.button,
-                pos.x,
-                pos.y
-            );
+        if(this.state.emitComplexActions === true) {
+            for(let path of Object.values(this.state.Path)) {
+                this._addPath(
+                    path.button,
+                    pos.x,
+                    pos.y
+                );
+            }
         }
     
         return this;
@@ -224,19 +236,21 @@ export default class MouseNode extends Node {
             this.signet
         ));
 
-        if(!this.state.Selection[ e.button ]) {
-            this._startSelection(
-                e.button,
-                pos.x,
-                pos.y
-            );
-        }
-        if(!this.state.Path[ e.button ]) {
-            this._startPath(
-                e.button,
-                pos.x,
-                pos.y
-            );
+        if(this.state.emitComplexActions === true) {
+            if(!this.state.Selection[ e.button ]) {
+                this._startSelection(
+                    e.button,
+                    pos.x,
+                    pos.y
+                );
+            }
+            if(!this.state.Path[ e.button ]) {
+                this._startPath(
+                    e.button,
+                    pos.x,
+                    pos.y
+                );
+            }
         }
     
         return this;
@@ -257,16 +271,18 @@ export default class MouseNode extends Node {
             this.signet
         ));
 
-        if(this.state.Selection[ e.button ]) {
-            this.state.Selection[ e.button ].points.end = [ pos.x, pos.y ];
-            this._fireSelection(
-                e.button
-            );
-        }
-        if(this.state.Path[ e.button ]) {
-            this._firePath(
-                e.button
-            );
+        if(this.state.emitComplexActions === true) {
+            if(this.state.Selection[ e.button ]) {
+                this.state.Selection[ e.button ].points.end = [ pos.x, pos.y ];
+                this._fireSelection(
+                    e.button
+                );
+            }
+            if(this.state.Path[ e.button ]) {
+                this._firePath(
+                    e.button
+                );
+            }
         }
     
         return this;

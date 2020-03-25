@@ -16,8 +16,8 @@ const MTS = (new MTSLib.Main({
         },
         // A list of routes for the Main Node to respond to
         routes: [
-            // MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_SELECTION,
-            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_PATH,
+            MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_SELECTION,
+            // MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_PATH,
             // ...MTSLib.Browser.Input.MouseNode.AllSignalTypes(
             //     MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MOVE,
             //     MTSLib.Browser.Input.MouseNode.SignalTypes.MOUSE_MASK,
@@ -34,7 +34,7 @@ const MTS = (new MTSLib.Main({
     })
     // Activate the MTS.Browser.Input Nodes
     .loadBrowserInput({
-        mouse: true,
+        mouseComplex: true,
         keys: false
     });
 
